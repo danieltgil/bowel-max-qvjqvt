@@ -1,26 +1,55 @@
+
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
 export const colors = {
-  primary: '#162456',    // Material Blue
-  secondary: '#193cb8',  // Darker Blue
-  accent: '#64B5F6',     // Light Blue
-  background: '#101824',  // Keeping dark background
-  backgroundAlt: '#162133',  // Keeping dark background
-  text: '#e3e3e3',       // Keeping light text
-  grey: '#90CAF9',       // Light Blue Grey
-  card: '#193cb8',       // Keeping dark card background
+  // Bowel Max color scheme - Cal AI inspired
+  background: '#FFFFFF',
+  backgroundAlt: '#FAFAFA',
+  text: '#333333',
+  textSecondary: '#666666',
+  textLight: '#999999',
+  primary: '#A7F3D0',        // Mint green
+  primaryDark: '#74D680',    // Darker mint
+  secondary: '#D2B48C',      // Soft brown
+  accent: '#74D680',         // Accent mint
+  card: '#FAFAFA',
+  highlight: '#FDE68A',      // Light yellow
+  border: '#E5E5E5',
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
 };
 
 export const buttonStyles = StyleSheet.create({
-  instructionsButton: {
+  primaryButton: {
     backgroundColor: colors.primary,
-    alignSelf: 'center',
-    width: '100%',
+    borderRadius: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0px 4px 12px rgba(167, 243, 208, 0.3)',
+    elevation: 4,
   },
-  backButton: {
+  primaryButtonText: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  secondaryButton: {
     backgroundColor: colors.backgroundAlt,
-    alignSelf: 'center',
-    width: '100%',
+    borderRadius: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  secondaryButtonText: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
@@ -35,8 +64,6 @@ export const commonStyles = StyleSheet.create({
     backgroundColor: colors.background,
     width: '100%',
     height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   content: {
     flex: 1,
@@ -46,16 +73,23 @@ export const commonStyles = StyleSheet.create({
     width: '100%',
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: '800',
     textAlign: 'center',
     color: colors.text,
-    marginBottom: 10
+    marginBottom: 12,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
   },
   text: {
     fontSize: 16,
-    fontWeight: '500',
-    color: colors.text,
+    fontWeight: '400',
+    color: colors.textSecondary,
     marginBottom: 8,
     lineHeight: 24,
     textAlign: 'center',
@@ -65,25 +99,17 @@ export const commonStyles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-  buttonContainer: {
-    width: '100%',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
   card: {
-    backgroundColor: colors.backgroundAlt,
-    borderColor: colors.grey,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 20,
     marginVertical: 8,
     width: '100%',
-    boxShadow: '0px 2px 3px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
     elevation: 2,
   },
   icon: {
     width: 60,
     height: 60,
-    tintColor: "white",
   },
 });
