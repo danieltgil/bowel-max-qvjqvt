@@ -80,6 +80,9 @@ const MAPPING = {
   "play.fill": "play-arrow",
   "pause.fill": "pause",
   "stop.fill": "stop",
+  "ellipsis": "more-horiz",
+  "flash": "flash-on",
+  "flash.off": "flash-off",
 
   // System & Settings
   "gear": "settings",
@@ -161,6 +164,9 @@ const MAPPING = {
   "lightbulb.fill": "lightbulb",
   "moon.fill": "dark-mode",
   "sun.max.fill": "light-mode",
+  "sparkles": "auto-awesome",
+  "chart.bar.fill": "bar-chart",
+  "paintpalette.fill": "palette",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],
