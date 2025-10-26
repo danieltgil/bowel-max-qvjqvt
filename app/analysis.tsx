@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable, Animated, ScrollView, Alert, TextInput, Modal } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from "@/components/IconSymbol";
 import { colors } from "@/styles/commonStyles";
 import { analyzeStoolImage, AnalysisResult } from "@/utils/imageAnalysis";
@@ -10,7 +11,7 @@ import { useUser } from "@/contexts/UserContext";
 
 export default function AnalysisScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ photoUri?: string }>();
+  const params = useLocalSearchParams<{ photoUri?: string; entryId?: string }>();
   const { userId } = useUser();
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [rotateAnim] = useState(new Animated.Value(0));
@@ -20,6 +21,8 @@ export default function AnalysisScreen() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedResult, setEditedResult] = useState<AnalysisResult | null>(null);
   const [userNotes, setUserNotes] = useState('');
+  const [isViewMode, setIsViewMode] = useState(false); // true if viewing existing entry
+  const [entryDate, setEntryDate] = useState<string | null>(null);
 
   useEffect(() => {
     // Start loading animation
@@ -37,56 +40,94 @@ export default function AnalysisScreen() {
       useNativeDriver: true,
     }).start();
 
-    // Perform real AI analysis
-    const analyzePhoto = async () => {
-      if (!params.photoUri) {
-        Alert.alert('Error', 'No photo provided');
-        router.back();
-        return;
-      }
+    // Load existing entry or perform AI analysis
+    const loadData = async () => {
+      // If entryId is provided, load existing entry from Supabase
+      if (params.entryId) {
+        try {
+          const { data, error } = await supabase
+            .from('poop_entries')
+            .select('*')
+            .eq('id', params.entryId)
+            .single();
 
-      try {
-        // Analyze the image
-        const result = await analyzeStoolImage(params.photoUri);
-        
-        // Check if it's actually poop
-        if (!result.isPoop) {
+          if (error || !data) {
+            throw new Error('Entry not found');
+          }
+
+          // Map database entry to AnalysisResult format
+          const result: AnalysisResult = {
+            isPoop: true,
+            bristol_type: data.bristol_type || 0,
+            color: data.color || 'Brown',
+            texture: data.texture || 'Normal',
+            hydration_level: data.hydration_level || 'Adequate',
+            ai_insight: data.ai_insight || '',
+          };
+
+          setAnalysisResult(result);
+          setEditedResult(result);
+          setUserNotes(data.notes || '');
+          setEntryDate(data.entry_date);
+          setIsViewMode(true); // Viewing existing entry
+          setIsAnalyzing(false);
+        } catch (err) {
+          console.error('Error loading entry:', err);
+          setError('Failed to load entry');
+          setIsAnalyzing(false);
+          Alert.alert('Error', 'Failed to load entry', [
+            { text: 'OK', onPress: () => router.back() }
+          ]);
+        }
+      }
+      // Otherwise, analyze new photo
+      else if (params.photoUri) {
+        try {
+          // Analyze the image
+          const result = await analyzeStoolImage(params.photoUri);
+
+          // Check if it's actually poop
+          if (!result.isPoop) {
+            Alert.alert(
+              'Invalid Image',
+              'Please upload an actual stool photo for analysis.',
+              [
+                {
+                  text: 'Retry',
+                  onPress: () => router.back(),
+                },
+              ]
+            );
+            return;
+          }
+
+          setAnalysisResult(result);
+          setEditedResult(result); // Initialize edited result with AI result
+          setIsViewMode(false); // Creating new entry
+          setIsAnalyzing(false);
+        } catch (err) {
+          console.error('Analysis error:', err);
+          setError(err instanceof Error ? err.message : 'Failed to analyze image');
+          setIsAnalyzing(false);
           Alert.alert(
-            'Invalid Image',
-            'Please upload an actual stool photo for analysis.',
+            'Analysis Failed',
+            'Unable to analyze the photo. Please try again.',
             [
               {
-                text: 'Retry',
+                text: 'OK',
                 onPress: () => router.back(),
               },
             ]
           );
-          return;
         }
-
-        setAnalysisResult(result);
-        setEditedResult(result); // Initialize edited result with AI result
-
-        setIsAnalyzing(false);
-      } catch (err) {
-        console.error('Analysis error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to analyze image');
-        setIsAnalyzing(false);
-        Alert.alert(
-          'Analysis Failed',
-          'Unable to analyze the photo. Please try again.',
-          [
-            {
-              text: 'OK',
-              onPress: () => router.back(),
-            },
-          ]
-        );
+      } else {
+        Alert.alert('Error', 'No photo or entry provided');
+        router.back();
       }
     };
 
-    analyzePhoto();
-  }, [params.photoUri, userId]);
+    loadData();
+  }, [params.photoUri, params.entryId, userId]);
 
   const spin = rotateAnim.interpolate({
     inputRange: [0, 1],
@@ -124,13 +165,34 @@ export default function AnalysisScreen() {
   };
 
   const handleSave = async () => {
-    if (!editedResult || !params.photoUri) return;
-    
+    if (!editedResult) return;
+
     try {
-      await saveEntryToDatabase(editedResult, params.photoUri, userNotes);
-      Alert.alert('Success', 'Entry saved!', [
-        { text: 'OK', onPress: () => router.push('/(tabs)/(home)') }
-      ]);
+      if (isViewMode && params.entryId) {
+        // Update existing entry
+        const { error } = await supabase
+          .from('poop_entries')
+          .update({
+            bristol_type: editedResult.bristol_type,
+            color: editedResult.color,
+            texture: editedResult.texture,
+            hydration_level: editedResult.hydration_level,
+            notes: userNotes || null,
+          })
+          .eq('id', params.entryId);
+
+        if (error) throw error;
+
+        Alert.alert('Success', 'Entry updated!', [
+          { text: 'OK', onPress: () => router.push('/(tabs)/(home)') }
+        ]);
+      } else if (params.photoUri) {
+        // Create new entry
+        await saveEntryToDatabase(editedResult, params.photoUri, userNotes);
+        Alert.alert('Success', 'Entry saved!', [
+          { text: 'OK', onPress: () => router.push('/(tabs)/(home)') }
+        ]);
+      }
     } catch (err) {
       Alert.alert('Error', 'Failed to save entry. Please try again.');
     }
@@ -196,13 +258,15 @@ export default function AnalysisScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Back Button */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <IconSymbol name="arrow.left" color={colors.text} size={24} />
         </Pressable>
-        <Text style={styles.headerTitle}>Analysis Results</Text>
+        <Text style={styles.headerTitle}>
+          {isViewMode ? 'Entry Details' : 'Analysis Results'}
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -210,6 +274,22 @@ export default function AnalysisScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Entry Date (for view mode) */}
+        {isViewMode && entryDate && (
+          <View style={styles.entryDateCard}>
+            <IconSymbol name="calendar" color={colors.textSecondary} size={18} />
+            <Text style={styles.entryDateText}>
+              {new Date(entryDate).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+          </View>
+        )}
 
         {/* Quick Summary Cards */}
         <View style={styles.quickSummaryGrid}>
@@ -280,15 +360,19 @@ export default function AnalysisScreen() {
             style={styles.fixButton}
             onPress={() => setIsEditMode(true)}
           >
-            <IconSymbol name="sparkles" color={colors.text} size={20} />
-            <Text style={styles.fixButtonText}>Fix Results</Text>
+            <IconSymbol name="pencil" color={colors.text} size={20} />
+            <Text style={styles.fixButtonText}>
+              {isViewMode ? 'Edit Entry' : 'Fix Results'}
+            </Text>
           </Pressable>
-          <Pressable
-            style={styles.primaryButton}
-            onPress={handleSave}
-          >
-            <Text style={styles.primaryButtonText}>Save</Text>
-          </Pressable>
+          {!isViewMode && (
+            <Pressable
+              style={styles.primaryButton}
+              onPress={handleSave}
+            >
+              <Text style={styles.primaryButtonText}>Save</Text>
+            </Pressable>
+          )}
         </View>
       </ScrollView>
 
@@ -304,12 +388,23 @@ export default function AnalysisScreen() {
             <View style={[styles.modalHeader, { paddingHorizontal: 24 }]}>
               <Text style={styles.modalTitle}>Edit Results</Text>
               <View style={styles.modalHeaderRight}>
-                {editedResult && JSON.stringify(editedResult) !== JSON.stringify(analysisResult) && (
-                  <Pressable 
+                {isViewMode && editedResult && JSON.stringify(editedResult) !== JSON.stringify(analysisResult) && (
+                  <Pressable
+                    style={styles.headerSaveButton}
+                    onPress={async () => {
+                      await handleSave();
+                      setIsEditMode(false);
+                    }}
+                  >
+                    <Text style={styles.headerSaveButtonText}>Save Changes</Text>
+                  </Pressable>
+                )}
+                {!isViewMode && editedResult && JSON.stringify(editedResult) !== JSON.stringify(analysisResult) && (
+                  <Pressable
                     style={styles.headerSaveButton}
                     onPress={() => setIsEditMode(false)}
                   >
-                    <Text style={styles.headerSaveButtonText}>Save</Text>
+                    <Text style={styles.headerSaveButtonText}>Done</Text>
                   </Pressable>
                 )}
                 <Pressable onPress={() => setIsEditMode(false)} style={styles.closeButton}>
@@ -407,7 +502,7 @@ export default function AnalysisScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -478,6 +573,21 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingHorizontal: 20,
     paddingBottom: 40,
+  },
+  entryDateCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  entryDateText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    flex: 1,
   },
   successHeader: {
     alignItems: 'center',

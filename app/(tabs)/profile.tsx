@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Stack } from "expo-router";
 import { ScrollView, StyleSheet, View, Text, Platform, Pressable, Switch, TextInput, Alert, ActivityIndicator } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { useUser } from "@/contexts/UserContext";
@@ -85,7 +86,7 @@ export default function ProfileScreen() {
 
   if (!user) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <Stack.Screen
           options={{
             headerShown: true,
@@ -96,16 +97,18 @@ export default function ProfileScreen() {
             headerLeft: renderHeaderLeft,
           }}
         />
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No user profile found</Text>
-          <Text style={styles.emptySubtext}>Please complete onboarding first</Text>
+        <View style={styles.container}>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No user profile found</Text>
+            <Text style={styles.emptySubtext}>Please complete onboarding first</Text>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <Stack.Screen
         options={{
           headerShown: true,
@@ -123,8 +126,9 @@ export default function ProfileScreen() {
           ),
         }}
       />
-      
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+
+      <View style={styles.container}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Profile Header */}
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
@@ -305,12 +309,17 @@ export default function ProfileScreen() {
         )}
 
         <View style={styles.bottomSpacing} />
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -343,7 +352,8 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingTop: 16,
+    paddingBottom: 32,
     paddingHorizontal: 24,
   },
   avatarContainer: {

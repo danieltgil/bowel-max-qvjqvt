@@ -132,7 +132,11 @@ export default function HomeScreen() {
           
           {recentEntries.length > 0 ? (
             recentEntries.map((entry) => (
-              <View key={entry.id} style={styles.summaryCard}>
+              <Pressable
+                key={entry.id}
+                style={styles.summaryCard}
+                onPress={() => router.push(`/analysis?entryId=${entry.id}`)}
+              >
                 <View style={styles.summaryCardHeader}>
                   <View style={styles.summaryCardIcon}>
                     <IconSymbol name="checkmark.circle.fill" color={colors.success} size={24} />
@@ -147,7 +151,7 @@ export default function HomeScreen() {
                   </View>
                   <IconSymbol name="chevron.right" color={colors.textSecondary} size={20} />
                 </View>
-              </View>
+              </Pressable>
             ))
           ) : (
             <View style={styles.emptyCard}>
@@ -172,7 +176,9 @@ export default function HomeScreen() {
 
               <View style={styles.statCard}>
                 <IconSymbol name="leaf.fill" color={colors.success} size={28} />
-                <Text style={styles.statValue}>{user.diet_type?.split(' ')[0] || 'N/A'}</Text>
+                <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+                  {user.diet_type?.split(' ')[0] || 'N/A'}
+                </Text>
                 <Text style={styles.statLabel}>Fiber</Text>
               </View>
 
@@ -333,7 +339,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800',
     color: colors.text,
     marginTop: 8,

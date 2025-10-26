@@ -2,6 +2,7 @@
 import React from "react";
 import { Stack } from "expo-router";
 import { ScrollView, StyleSheet, View, Text, Platform } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from "@/components/IconSymbol";
 import { colors } from "@/styles/commonStyles";
 import Svg, { Path } from 'react-native-svg';
@@ -20,14 +21,16 @@ export default function InsightsScreen() {
   );
 
   return (
-    <>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <Stack.Screen
         options={{
-          headerShown: Platform.OS === 'ios',
+          headerShown: true,
           title: "",
           headerStyle: {
             backgroundColor: colors.background,
           },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
           headerLeft: renderHeaderLeft,
         }}
       />
@@ -191,11 +194,15 @@ export default function InsightsScreen() {
           </View>
         </ScrollView>
       </View>
-    </>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
   },
@@ -211,7 +218,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   scrollContent: {
-    paddingVertical: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
     paddingHorizontal: 20,
   },
   scrollContentWithTabBar: {

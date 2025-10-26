@@ -94,10 +94,8 @@ export default function FloatingTabBar({
   }, [activeTabIndex, animatedValue]);
 
   const handleTabPress = (route: string) => {
-    router.push(route);
+    router.push(route as any);
   };
-
-  // Remove unnecessary tabBarStyle animation to prevent flickering
 
   const indicatorStyle = useAnimatedStyle(() => {
     const tabWidth = (containerWidth - 16) / tabs.length; // Account for container padding (8px on each side)
@@ -152,7 +150,7 @@ export default function FloatingTabBar({
       backgroundColor: theme.dark
         ? 'rgba(255, 255, 255, 0.08)' // Subtle white overlay in dark mode
         : 'rgba(0, 0, 0, 0.04)', // Subtle black overlay in light mode
-      width: `${(100 / tabs.length) - 3}%`, // Dynamic width based on number of tabs
+      width: `${(100 / tabs.length) - 3}%` as any, // Dynamic width based on number of tabs
     },
   };
 
@@ -170,7 +168,7 @@ export default function FloatingTabBar({
           style={[dynamicStyles.blurContainer, { borderRadius }]}
         >
           <View style={dynamicStyles.background} />
-          <Animated.View style={[dynamicStyles.indicator, indicatorStyle]} />
+          <Animated.View style={[dynamicStyles.indicator as any, indicatorStyle]} />
           <View style={styles.tabsContainer}>
             {tabs.map((tab, index) => {
               const isActive = activeTabIndex === index;
@@ -184,8 +182,8 @@ export default function FloatingTabBar({
                 >
                   <View style={styles.tabContent}>
                     <IconSymbol
-                      name={tab.icon}
-                      size={24}
+                      name={tab.icon as any}
+                      size={22}
                       color={isActive ? colors.primaryDark : colors.textSecondary}
                     />
                     <Text
@@ -194,6 +192,7 @@ export default function FloatingTabBar({
                         { color: colors.textSecondary },
                         isActive && { color: colors.primaryDark, fontWeight: '600' },
                       ]}
+                      numberOfLines={1}
                     >
                       {tab.label}
                     </Text>
@@ -232,16 +231,16 @@ const styles = StyleSheet.create({
   },
   indicator: {
     position: 'absolute',
-    top: 8,
+    top: 6,
     left: 8,
-    bottom: 8,
+    bottom: 6,
     borderRadius: 17,
     width: `${(100 / 2) - 3}%`, // Default for 2 tabs, will be overridden by dynamic styles
     // Dynamic styling applied in component
   },
   tabsContainer: {
     flexDirection: 'row',
-    height: 60,
+    height: 72,
     alignItems: 'center',
     paddingHorizontal: 8,
   },
@@ -254,12 +253,13 @@ const styles = StyleSheet.create({
   tabContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
+    gap: 4,
   },
   tabLabel: {
     fontSize: 11,
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: 4,
+    textAlign: 'center',
     // Dynamic styling applied in component
   },
 });
