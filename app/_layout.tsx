@@ -1,33 +1,28 @@
-import "react-native-reanimated";
+
 import React, { useEffect } from "react";
-import { useFonts } from "expo-font";
 import { Stack, router } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { SystemBars } from "react-native-edge-to-edge";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useFonts } from "expo-font";
 import { useColorScheme, Alert } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import * as SplashScreen from "expo-splash-screen";
+import "react-native-reanimated";
 import { useNetworkState } from "expo-network";
+import { colors } from "@/styles/commonStyles";
+import { WidgetProvider } from "@/contexts/WidgetContext";
+import { UserProvider } from "@/contexts/UserContext";
+import { SystemBars } from "react-native-edge-to-edge";
 import {
   DarkTheme,
   DefaultTheme,
   Theme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { StatusBar } from "expo-status-bar";
-import { Button } from "@/components/button";
-import { WidgetProvider } from "@/contexts/WidgetContext";
-import { colors } from "@/styles/commonStyles";
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
-export const unstable_settings = {
-  initialRouteName: "index",
-};
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const networkState = useNetworkState();
+  const { isConnected } = useNetworkState();
+
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -38,114 +33,64 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  React.useEffect(() => {
-    if (
-      !networkState.isConnected &&
-      networkState.isInternetReachable === false
-    ) {
-      Alert.alert(
-        "🔌 You are offline",
-        "You can keep using the app! Your changes will be saved locally and synced when you are back online."
-      );
-    }
-  }, [networkState.isConnected, networkState.isInternetReachable]);
-
   if (!loaded) {
     return null;
   }
 
-  const CustomDefaultTheme: Theme = {
-    ...DefaultTheme,
-    dark: false,
+  const customTheme: Theme = {
+    ...(colorScheme === "dark" ? DarkTheme : DefaultTheme),
     colors: {
-      primary: colors.primaryDark,
+      ...(colorScheme === "dark" ? DarkTheme.colors : DefaultTheme.colors),
+      primary: colors.primary,
       background: colors.background,
-      card: colors.card,
+      card: colors.cardBackground,
       text: colors.text,
       border: colors.border,
-      notification: colors.error,
+      notification: colors.primary,
     },
   };
 
-  const CustomDarkTheme: Theme = {
-    ...DarkTheme,
-    colors: {
-      primary: colors.primaryDark,
-      background: colors.text,
-      card: colors.textSecondary,
-      text: colors.background,
-      border: colors.border,
-      notification: colors.error,
-    },
-  };
   return (
-    <>
-      <StatusBar style="auto" animated />
-        <ThemeProvider
-          value={colorScheme === "dark" ? CustomDarkTheme : CustomDefaultTheme}
-        >
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={customTheme}>
+        <UserProvider>
           <WidgetProvider>
-            <GestureHandlerRootView>
-            <Stack>
-              {/* Index/Redirect Screen */}
-              <Stack.Screen 
-                name="index" 
-                options={{ 
-                  headerShown: false,
-                }} 
-              />
-
-              {/* Onboarding Screen */}
-              <Stack.Screen 
-                name="onboarding" 
-                options={{ 
-                  headerShown: false,
-                  gestureEnabled: false,
-                }} 
-              />
-
-              {/* Analysis Screen */}
-              <Stack.Screen 
-                name="analysis" 
-                options={{ 
-                  headerShown: false,
-                  presentation: "modal",
-                }} 
-              />
-
-              {/* Main app with tabs */}
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-
-              {/* Modal Demo Screens */}
+            <SystemBars style="auto" />
+            <StatusBar style="auto" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.background },
+              }}
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="onboarding" />
+              <Stack.Screen name="analysis" />
               <Stack.Screen
                 name="modal"
                 options={{
                   presentation: "modal",
-                  title: "Standard Modal",
+                  animation: "slide_from_bottom",
                 }}
               />
               <Stack.Screen
                 name="formsheet"
                 options={{
                   presentation: "formSheet",
-                  title: "Form Sheet Modal",
-                  sheetGrabberVisible: true,
-                  sheetAllowedDetents: [0.5, 0.8, 1.0],
-                  sheetCornerRadius: 20,
+                  sheetAllowedDetents: [0.5, 0.8],
                 }}
               />
               <Stack.Screen
                 name="transparent-modal"
                 options={{
                   presentation: "transparentModal",
-                  headerShown: false,
+                  animation: "fade",
                 }}
               />
             </Stack>
-            <SystemBars style={"auto"} />
-            </GestureHandlerRootView>
           </WidgetProvider>
-        </ThemeProvider>
-    </>
+        </UserProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

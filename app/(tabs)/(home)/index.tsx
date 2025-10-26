@@ -1,41 +1,52 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Stack } from "expo-router";
-import { ScrollView, Pressable, StyleSheet, View, Text, Platform, Animated } from "react-native";
-import { IconSymbol } from "@/components/IconSymbol";
-import { useTheme } from "@react-navigation/native";
+import { ScrollView, Pressable, StyleSheet, View, Text, Platform, Animated, Alert } from "react-native";
 import { colors } from "@/styles/commonStyles";
 import * as ImagePicker from 'expo-image-picker';
+import { IconSymbol } from "@/components/IconSymbol";
+import { useTheme } from "@react-navigation/native";
 import { useRouter } from 'expo-router';
+import { useUser } from "@/contexts/UserContext";
+import { supabase } from "@/app/integrations/supabase/client";
 
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const { user, userId } = useUser();
   const [scaleAnim] = useState(new Animated.Value(1));
+  const [recentEntries, setRecentEntries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (userId) {
+      loadRecentEntries();
+    }
+  }, [userId]);
+
+  const loadRecentEntries = async () => {
+    if (!userId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('poop_entries')
+        .select('*')
+        .eq('user_id', userId)
+        .order('entry_date', { ascending: false })
+        .limit(3);
+
+      if (error) {
+        console.error('Error loading entries:', error);
+        return;
+      }
+
+      setRecentEntries(data || []);
+    } catch (err) {
+      console.error('Unexpected error loading entries:', err);
+    }
+  };
 
   const handleUploadPhoto = async () => {
-    // Animate button press
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Request permissions
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      console.log('Permission denied');
-      return;
-    }
-
-    // Launch image picker
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -45,15 +56,15 @@ export default function HomeScreen() {
 
     if (!result.canceled) {
       console.log('Image selected:', result.assets[0].uri);
-      // Navigate to analysis screen
       router.push('/analysis');
     }
   };
 
   const handleTakePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    
     if (status !== 'granted') {
-      console.log('Camera permission denied');
+      Alert.alert('Permission Required', 'Camera permission is needed to take photos.');
       return;
     }
 
@@ -69,200 +80,231 @@ export default function HomeScreen() {
     }
   };
 
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const renderHeaderRight = () => (
-    <Pressable
-      onPress={() => console.log('Settings pressed')}
-      style={styles.headerButtonContainer}
-    >
+    <Pressable onPress={() => console.log('Settings pressed')} style={{ marginRight: 16 }}>
       <IconSymbol name="gear" color={colors.text} size={24} />
     </Pressable>
   );
 
   return (
-    <>
-      {Platform.OS === 'ios' && (
-        <Stack.Screen
-          options={{
-            title: "Bowel Max",
-            headerRight: renderHeaderRight,
-            headerStyle: {
-              backgroundColor: colors.background,
-            },
-            headerTitleStyle: {
-              color: colors.text,
-              fontWeight: '700',
-            },
-          }}
-        />
-      )}
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            Platform.OS !== 'ios' && styles.scrollContentWithTabBar
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.greeting}>Hello! 👋</Text>
-            <Text style={styles.subtitle}>Ready to check your gut health?</Text>
+    <View style={styles.container}>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: "Bowel Max",
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
+          headerRight: renderHeaderRight,
+        }}
+      />
+      
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Welcome Section */}
+        {user && (
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeText}>Hello, {user.name}! 👋</Text>
+            <Text style={styles.welcomeSubtext}>Ready to track your gut health?</Text>
           </View>
+        )}
 
-          {/* Main Upload Button */}
-          <Animated.View style={[styles.uploadButtonContainer, { transform: [{ scale: scaleAnim }] }]}>
-            <Pressable
-              style={styles.uploadButton}
-              onPress={handleUploadPhoto}
-            >
-              <View style={styles.uploadIconContainer}>
-                <IconSymbol name="camera.fill" color={colors.text} size={48} />
-              </View>
-              <Text style={styles.uploadButtonText}>Upload Stool Photo</Text>
-              <Text style={styles.uploadButtonSubtext}>Tap to select from gallery</Text>
-            </Pressable>
-          </Animated.View>
-
-          {/* Camera Button */}
+        {/* Main Upload Button */}
+        <Animated.View style={[styles.uploadButtonContainer, { transform: [{ scale: scaleAnim }] }]}>
           <Pressable
-            style={styles.cameraButton}
-            onPress={handleTakePhoto}
+            style={styles.uploadButton}
+            onPress={handleUploadPhoto}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
           >
-            <IconSymbol name="camera" color={colors.text} size={20} />
-            <Text style={styles.cameraButtonText}>Take Photo Now</Text>
+            <View style={styles.uploadIconContainer}>
+              <IconSymbol name="camera.fill" color={colors.text} size={40} />
+            </View>
+            <Text style={styles.uploadButtonText}>Upload Stool Photo</Text>
+            <Text style={styles.uploadButtonSubtext}>Tap to analyze</Text>
           </Pressable>
+        </Animated.View>
 
-          {/* Summary Cards */}
-          <View style={styles.summarySection}>
-            <Text style={styles.sectionTitle}>Recent Summary</Text>
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <Pressable style={styles.quickActionButton} onPress={handleTakePhoto}>
+            <IconSymbol name="camera" color={colors.primary} size={24} />
+            <Text style={styles.quickActionText}>Take Photo</Text>
+          </Pressable>
+          
+          <Pressable style={styles.quickActionButton} onPress={handleUploadPhoto}>
+            <IconSymbol name="photo" color={colors.primary} size={24} />
+            <Text style={styles.quickActionText}>From Gallery</Text>
+          </Pressable>
+        </View>
+
+        {/* Summary Cards */}
+        <View style={styles.summarySection}>
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          
+          {recentEntries.length > 0 ? (
+            recentEntries.map((entry) => (
+              <View key={entry.id} style={styles.summaryCard}>
+                <View style={styles.summaryCardHeader}>
+                  <View style={styles.summaryCardIcon}>
+                    <IconSymbol name="checkmark.circle.fill" color={colors.success} size={24} />
+                  </View>
+                  <View style={styles.summaryCardContent}>
+                    <Text style={styles.summaryCardTitle}>
+                      {new Date(entry.entry_date).toLocaleDateString()}
+                    </Text>
+                    <Text style={styles.summaryCardSubtitle}>
+                      {entry.bristol_type ? `Type ${entry.bristol_type}` : 'Analysis complete'}
+                    </Text>
+                  </View>
+                  <IconSymbol name="chevron.right" color={colors.textSecondary} size={20} />
+                </View>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyCard}>
+              <IconSymbol name="tray" color={colors.textSecondary} size={40} />
+              <Text style={styles.emptyCardText}>No entries yet</Text>
+              <Text style={styles.emptyCardSubtext}>Upload your first photo to get started!</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Health Stats */}
+        {user && (
+          <View style={styles.statsSection}>
+            <Text style={styles.sectionTitle}>Your Health Profile</Text>
             
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryCardHeader}>
-                <View style={[styles.summaryIcon, { backgroundColor: colors.success + '20' }]}>
-                  <IconSymbol name="checkmark.circle.fill" color={colors.success} size={24} />
-                </View>
-                <View style={styles.summaryCardContent}>
-                  <Text style={styles.summaryCardTitle}>Last Analysis</Text>
-                  <Text style={styles.summaryCardValue}>Normal</Text>
-                </View>
+            <View style={styles.statsGrid}>
+              <View style={styles.statCard}>
+                <IconSymbol name="drop.fill" color={colors.info} size={28} />
+                <Text style={styles.statValue}>{user.hydration_glasses || 0}</Text>
+                <Text style={styles.statLabel}>Glasses/day</Text>
               </View>
-              <Text style={styles.summaryCardDate}>2 days ago</Text>
-            </View>
 
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryCardHeader}>
-                <View style={[styles.summaryIcon, { backgroundColor: colors.warning + '20' }]}>
-                  <IconSymbol name="drop.fill" color={colors.warning} size={24} />
-                </View>
-                <View style={styles.summaryCardContent}>
-                  <Text style={styles.summaryCardTitle}>Hydration Level</Text>
-                  <Text style={[styles.summaryCardValue, { color: colors.warning }]}>Low</Text>
-                </View>
+              <View style={styles.statCard}>
+                <IconSymbol name="leaf.fill" color={colors.success} size={28} />
+                <Text style={styles.statValue}>{user.diet_type?.split(' ')[0] || 'N/A'}</Text>
+                <Text style={styles.statLabel}>Fiber</Text>
               </View>
-              <Text style={styles.summaryCardDate}>Drink more water today!</Text>
-            </View>
 
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryCardHeader}>
-                <View style={[styles.summaryIcon, { backgroundColor: colors.primary + '40' }]}>
-                  <IconSymbol name="chart.line.uptrend.xyaxis" color={colors.primaryDark} size={24} />
-                </View>
-                <View style={styles.summaryCardContent}>
-                  <Text style={styles.summaryCardTitle}>Weekly Trend</Text>
-                  <Text style={[styles.summaryCardValue, { color: colors.success }]}>Improving</Text>
-                </View>
+              <View style={styles.statCard}>
+                <IconSymbol name="clock.fill" color={colors.warning} size={28} />
+                <Text style={styles.statValue}>{user.restroom_frequency?.split(' ')[0] || 'N/A'}</Text>
+                <Text style={styles.statLabel}>Frequency</Text>
               </View>
-              <Text style={styles.summaryCardDate}>Keep up the good work! 💪</Text>
             </View>
           </View>
+        )}
 
-          {/* Privacy Note */}
-          <View style={styles.privacyNote}>
-            <IconSymbol name="lock.fill" color={colors.textLight} size={16} />
-            <Text style={styles.privacyText}>
-              All photos are analyzed securely and never shared
-            </Text>
-          </View>
-        </ScrollView>
-      </View>
-    </>
+        {/* Privacy Note */}
+        <View style={styles.privacyNote}>
+          <IconSymbol name="lock.fill" color={colors.success} size={20} />
+          <Text style={styles.privacyText}>
+            All photos are analyzed securely and never shared
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollView: {
+    flex: 1,
   },
   scrollContent: {
-    paddingVertical: 24,
-    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'ios' ? 100 : 80,
   },
-  scrollContentWithTabBar: {
-    paddingBottom: 100,
+  welcomeSection: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 16,
   },
-  headerButtonContainer: {
-    padding: 8,
-    marginRight: 8,
-  },
-  header: {
-    marginBottom: 32,
-  },
-  greeting: {
-    fontSize: 32,
+  welcomeText: {
+    fontSize: 28,
     fontWeight: '800',
     color: colors.text,
-    marginBottom: 8,
-    letterSpacing: -0.5,
+    marginBottom: 4,
   },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: '400',
+  welcomeSubtext: {
+    fontSize: 16,
+    fontWeight: '500',
     color: colors.textSecondary,
   },
   uploadButtonContainer: {
-    marginBottom: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 24,
   },
   uploadButton: {
     backgroundColor: colors.primary,
     borderRadius: 24,
-    padding: 32,
+    paddingVertical: 48,
+    paddingHorizontal: 32,
     alignItems: 'center',
     justifyContent: 'center',
     boxShadow: '0px 8px 24px rgba(167, 243, 208, 0.4)',
-    elevation: 6,
+    elevation: 8,
   },
   uploadIconContainer: {
     marginBottom: 16,
   },
   uploadButtonText: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     color: colors.text,
     marginBottom: 4,
   },
   uploadButtonSubtext: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text,
+    opacity: 0.8,
   },
-  cameraButton: {
-    backgroundColor: colors.backgroundAlt,
-    borderRadius: 16,
-    padding: 16,
+  quickActions: {
     flexDirection: 'row',
+    paddingHorizontal: 24,
+    gap: 12,
+    marginBottom: 32,
+  },
+  quickActionButton: {
+    flex: 1,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 32,
-    borderWidth: 1,
-    borderColor: colors.border,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.05)',
+    elevation: 2,
   },
-  cameraButtonText: {
-    fontSize: 16,
+  quickActionText: {
+    fontSize: 14,
     fontWeight: '600',
     color: colors.text,
-    marginLeft: 8,
+    marginTop: 8,
   },
   summarySection: {
+    paddingHorizontal: 24,
     marginBottom: 24,
   },
   sectionTitle: {
@@ -272,55 +314,100 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   summaryCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.cardBackground,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.05)',
     elevation: 2,
   },
   summaryCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  summaryIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+  summaryCardIcon: {
     marginRight: 12,
   },
   summaryCardContent: {
     flex: 1,
   },
   summaryCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  summaryCardSubtitle: {
     fontSize: 14,
     fontWeight: '500',
     color: colors.textSecondary,
-    marginBottom: 2,
   },
-  summaryCardValue: {
+  emptyCard: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.05)',
+    elevation: 2,
+  },
+  emptyCardText: {
     fontSize: 18,
     fontWeight: '700',
     color: colors.text,
+    marginTop: 16,
+    marginBottom: 4,
   },
-  summaryCardDate: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: colors.textLight,
+  emptyCardSubtext: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  statsSection: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.05)',
+    elevation: 2,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: colors.text,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   privacyNote: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 24,
     paddingVertical: 16,
+    marginBottom: 24,
   },
   privacyText: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: colors.textLight,
-    marginLeft: 6,
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textSecondary,
+    marginLeft: 8,
+    textAlign: 'center',
   },
 });
