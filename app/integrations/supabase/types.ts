@@ -17,6 +17,7 @@ export type Database = {
     Tables: {
       poop_entries: {
         Row: {
+          ai_insight: string | null
           bristol_type: number | null
           color: string | null
           created_at: string | null
@@ -29,6 +30,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_insight?: string | null
           bristol_type?: number | null
           color?: string | null
           created_at?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_insight?: string | null
           bristol_type?: number | null
           color?: string | null
           created_at?: string | null

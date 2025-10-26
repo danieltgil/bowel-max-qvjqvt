@@ -43,7 +43,7 @@ export default function RootLayout() {
       ...(colorScheme === "dark" ? DarkTheme.colors : DefaultTheme.colors),
       primary: colors.primary,
       background: colors.background,
-      card: colors.cardBackground,
+      card: colors.card,
       text: colors.text,
       border: colors.border,
       notification: colors.primary,
@@ -65,6 +65,7 @@ export default function RootLayout() {
             >
               <Stack.Screen name="index" />
               <Stack.Screen name="onboarding" />
+              <Stack.Screen name="camera" />
               <Stack.Screen name="analysis" />
               <Stack.Screen
                 name="modal"
