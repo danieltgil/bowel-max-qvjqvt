@@ -24,6 +24,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const loadUser = async (id: string) => {
     try {
+      console.log('Loading user with ID:', id);
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -35,6 +36,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      console.log('User loaded successfully:', data);
       setUser(data);
     } catch (err) {
       console.error('Unexpected error loading user:', err);
@@ -62,14 +64,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initUser = async () => {
       try {
+        console.log('Initializing user context...');
         const storedUserId = await AsyncStorage.getItem('userId');
+        console.log('Stored user ID:', storedUserId);
         if (storedUserId) {
           setUserIdState(storedUserId);
           await loadUser(storedUserId);
+        } else {
+          console.log('No stored user ID found');
         }
       } catch (err) {
         console.error('Error initializing user:', err);
       } finally {
+        console.log('User context initialization complete');
         setLoading(false);
       }
     };

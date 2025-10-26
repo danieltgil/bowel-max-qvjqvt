@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { View, Text, StyleSheet, Pressable, TextInput, Alert, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/IconSymbol";
@@ -7,9 +7,11 @@ import { colors } from "@/styles/commonStyles";
 import Slider from "@react-native-community/slider";
 import { supabase } from "@/app/integrations/supabase/client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUser } from "@/contexts/UserContext";
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { setUserId } = useUser();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   
@@ -72,8 +74,8 @@ export default function OnboardingScreen() {
 
       console.log('User created successfully:', data);
       
-      // Store user ID locally for future use
-      await AsyncStorage.setItem('userId', data.id);
+      // Store user ID locally and update context
+      await setUserId(data.id);
       
       Alert.alert(
         "Welcome to Bowel Max! 🎉",
@@ -81,7 +83,7 @@ export default function OnboardingScreen() {
         [
           {
             text: "Get Started",
-            onPress: () => router.replace('/(tabs)/(home)/'),
+            onPress: () => router.replace('/(tabs)/(home)/' as any),
           },
         ]
       );
@@ -99,7 +101,7 @@ export default function OnboardingScreen() {
       "We recommend completing the setup to get personalized insights.",
       [
         { text: "Continue Setup", style: "cancel" },
-        { text: "Skip", onPress: () => router.replace('/(tabs)/(home)/') },
+        { text: "Skip", onPress: () => router.replace('/(tabs)/(home)/' as any) },
       ]
     );
   };
@@ -452,7 +454,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   textInput: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: colors.card,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 16,
@@ -499,7 +501,7 @@ const styles = StyleSheet.create({
   },
   choiceButton: {
     flex: 1,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: colors.card,
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 24,
