@@ -9,6 +9,7 @@ import { useTheme } from "@react-navigation/native";
 import { useRouter } from 'expo-router';
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/app/integrations/supabase/client";
+import Svg, { Path } from 'react-native-svg';
 
 export default function HomeScreen() {
   const theme = useTheme();
@@ -46,21 +47,8 @@ export default function HomeScreen() {
     }
   };
 
+
   const handleUploadPhoto = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      console.log('Image selected:', result.assets[0].uri);
-      router.push('/analysis');
-    }
-  };
-
-  const handleTakePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     
     if (status !== 'granted') {
@@ -68,16 +56,8 @@ export default function HomeScreen() {
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      console.log('Photo taken:', result.assets[0].uri);
-      router.push('/analysis');
-    }
+    // Navigate to custom camera screen
+    router.push('/camera');
   };
 
   const handlePressIn = () => {
@@ -96,10 +76,16 @@ export default function HomeScreen() {
     }).start();
   };
 
-  const renderHeaderRight = () => (
-    <Pressable onPress={() => console.log('Settings pressed')} style={{ marginRight: 16 }}>
-      <IconSymbol name="gear" color={colors.text} size={24} />
-    </Pressable>
+  const renderHeaderLeft = () => (
+    <View style={styles.headerLogo}>
+      <Svg width={30} height={36} viewBox="0 0 100 120" style={{ marginRight: 8 }}>
+        <Path
+          d="M50 110 C35 105, 22 98, 20 85 C18 75, 22 65, 30 58 C25 50, 28 42, 35 40 C30 35, 32 28, 40 25 C45 20, 50 18, 55 20 C60 18, 65 20, 70 25 C78 28, 80 35, 75 40 C82 42, 85 50, 80 58 C88 65, 92 75, 90 85 C88 98, 75 105, 60 110 C58 108, 54 110, 50 110 Z"
+          fill="#000000"
+        />
+      </Svg>
+      <Text style={styles.headerTitle}>Bowel Max</Text>
+    </View>
   );
 
   return (
@@ -107,11 +93,11 @@ export default function HomeScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          title: "Bowel Max",
+          title: "",
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerShadowVisible: false,
-          headerRight: renderHeaderRight,
+          headerLeft: renderHeaderLeft,
         }}
       />
       
@@ -135,23 +121,10 @@ export default function HomeScreen() {
             <View style={styles.uploadIconContainer}>
               <IconSymbol name="camera.fill" color={colors.text} size={40} />
             </View>
-            <Text style={styles.uploadButtonText}>Upload Stool Photo</Text>
-            <Text style={styles.uploadButtonSubtext}>Tap to analyze</Text>
+            <Text style={styles.uploadButtonText}>Capture Stool Photo</Text>
+            <Text style={styles.uploadButtonSubtext}>Tap to take a photo</Text>
           </Pressable>
         </Animated.View>
-
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <Pressable style={styles.quickActionButton} onPress={handleTakePhoto}>
-            <IconSymbol name="camera" color={colors.primary} size={24} />
-            <Text style={styles.quickActionText}>Take Photo</Text>
-          </Pressable>
-          
-          <Pressable style={styles.quickActionButton} onPress={handleUploadPhoto}>
-            <IconSymbol name="photo" color={colors.primary} size={24} />
-            <Text style={styles.quickActionText}>From Gallery</Text>
-          </Pressable>
-        </View>
 
         {/* Summary Cards */}
         <View style={styles.summarySection}>
@@ -237,7 +210,7 @@ const styles = StyleSheet.create({
   },
   welcomeSection: {
     paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingTop: 16,
     paddingBottom: 16,
   },
   welcomeText: {
@@ -279,29 +252,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.text,
     opacity: 0.8,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    gap: 12,
-    marginBottom: 32,
-  },
-  quickActionButton: {
-    flex: 1,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.05)',
-    elevation: 2,
-  },
-  quickActionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-    marginTop: 8,
   },
   summarySection: {
     paddingHorizontal: 24,
@@ -409,5 +359,16 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginLeft: 8,
     textAlign: 'center',
+  },
+  headerLogo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 0,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.text,
+    letterSpacing: 0.5,
   },
 });

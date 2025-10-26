@@ -359,20 +359,16 @@ export default function InsightsScreen() {
 
   return (
     <>
-      {Platform.OS === 'ios' && (
-        <Stack.Screen
-          options={{
-            title: "Insights",
-            headerStyle: {
-              backgroundColor: colors.background,
-            },
-            headerTitleStyle: {
-              color: colors.text,
-              fontWeight: '700',
-            },
-          }}
-        />
-      )}
+      <Stack.Screen
+        options={{
+          headerShown: Platform.OS === 'ios',
+          title: "",
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerLeft: renderHeaderLeft,
+        }}
+      />
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ScrollView
           contentContainerStyle={[
@@ -585,6 +581,17 @@ export default function InsightsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerLogo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 0,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.text,
+    letterSpacing: 0.5,
   },
   scrollContent: {
     paddingVertical: 24,

@@ -6,12 +6,25 @@ import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/app/integrations/supabase/client";
+import Svg, { Path } from 'react-native-svg';
 
 export default function HistoryScreen() {
   const { userId } = useUser();
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  const renderHeaderLeft = () => (
+    <View style={styles.headerLogo}>
+      <Svg width={30} height={36} viewBox="0 0 100 120" style={{ marginRight: 8 }}>
+        <Path
+          d="M50 110 C35 105, 22 98, 20 85 C18 75, 22 65, 30 58 C25 50, 28 42, 35 40 C30 35, 32 28, 40 25 C45 20, 50 18, 55 20 C60 18, 65 20, 70 25 C78 28, 80 35, 75 40 C82 42, 85 50, 80 58 C88 65, 92 75, 90 85 C88 98, 75 105, 60 110 C58 108, 54 110, 50 110 Z"
+          fill="#000000"
+        />
+      </Svg>
+      <Text style={styles.headerTitle}>Bowel Max</Text>
+    </View>
+  );
 
   useEffect(() => {
     if (userId) {
@@ -83,10 +96,11 @@ export default function HistoryScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          title: "History",
+          title: "",
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerShadowVisible: false,
+          headerLeft: renderHeaderLeft,
         }}
       />
       
@@ -180,6 +194,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  headerLogo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 0,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.text,
+    letterSpacing: 0.5,
   },
   scrollView: {
     flex: 1,
