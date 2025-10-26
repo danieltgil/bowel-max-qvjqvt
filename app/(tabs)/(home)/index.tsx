@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Stack } from "expo-router";
-import { ScrollView, Pressable, StyleSheet, View, Text, Platform, Animated, Alert } from "react-native";
+import { ScrollView, Pressable, StyleSheet, View, Text, Platform, Animated, Alert, ActionSheetIOS } from "react-native";
 import { colors } from "@/styles/commonStyles";
 import * as ImagePicker from 'expo-image-picker';
 import { IconSymbol } from "@/components/IconSymbol";
@@ -46,20 +46,6 @@ export default function HomeScreen() {
     }
   };
 
-  const handleUploadPhoto = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      console.log('Image selected:', result.assets[0].uri);
-      router.push('/analysis');
-    }
-  };
-
   const handleTakePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     
@@ -77,6 +63,48 @@ export default function HomeScreen() {
     if (!result.canceled) {
       console.log('Photo taken:', result.assets[0].uri);
       router.push('/analysis');
+    }
+  };
+
+  const handleSelectFromGallery = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      console.log('Image selected:', result.assets[0].uri);
+      router.push('/analysis');
+    }
+  };
+
+  const handleUploadPhoto = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Take Photo', 'Choose from Gallery'],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            handleTakePhoto();
+          } else if (buttonIndex === 2) {
+            handleSelectFromGallery();
+          }
+        }
+      );
+    } else {
+      Alert.alert(
+        'Select Photo',
+        'Choose how you want to add a photo',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Take Photo', onPress: handleTakePhoto },
+          { text: 'Choose from Gallery', onPress: handleSelectFromGallery },
+        ]
+      );
     }
   };
 
@@ -139,19 +167,6 @@ export default function HomeScreen() {
             <Text style={styles.uploadButtonSubtext}>Tap to analyze</Text>
           </Pressable>
         </Animated.View>
-
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <Pressable style={styles.quickActionButton} onPress={handleTakePhoto}>
-            <IconSymbol name="camera" color={colors.primary} size={24} />
-            <Text style={styles.quickActionText}>Take Photo</Text>
-          </Pressable>
-          
-          <Pressable style={styles.quickActionButton} onPress={handleUploadPhoto}>
-            <IconSymbol name="photo" color={colors.primary} size={24} />
-            <Text style={styles.quickActionText}>From Gallery</Text>
-          </Pressable>
-        </View>
 
         {/* Summary Cards */}
         <View style={styles.summarySection}>
@@ -279,29 +294,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.text,
     opacity: 0.8,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    gap: 12,
-    marginBottom: 32,
-  },
-  quickActionButton: {
-    flex: 1,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.05)',
-    elevation: 2,
-  },
-  quickActionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-    marginTop: 8,
   },
   summarySection: {
     paddingHorizontal: 24,
