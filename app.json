@@ -16,7 +16,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.Natively",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSHealthShareUsageDescription": "This app uses HealthKit to analyze correlations between your health metrics and bowel health patterns.",
+        "NSHealthUpdateUsageDescription": "This app uses HealthKit to track health metrics for gut health analysis."
       }
     },
     "android": {
