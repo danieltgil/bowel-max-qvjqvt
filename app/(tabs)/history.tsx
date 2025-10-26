@@ -3,16 +3,18 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Stack, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, View, Text, Platform, Pressable, RefreshControl } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { useUser } from "@/contexts/UserContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/app/integrations/supabase/client";
 import Svg, { Path } from 'react-native-svg';
 
 export default function HistoryScreen() {
   const { userId } = useUser();
+  const { colors } = useTheme();
   const router = useRouter();
   const [entries, setEntries] = useState<any[]>([]);
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -25,7 +27,7 @@ export default function HistoryScreen() {
       <Svg width={30} height={36} viewBox="0 0 100 120" style={{ marginRight: 8, backgroundColor: 'transparent' }}>
         <Path
           d="M50 110 C35 105, 22 98, 20 85 C18 75, 22 65, 30 58 C25 50, 28 42, 35 40 C30 35, 32 28, 40 25 C45 20, 50 18, 55 20 C60 18, 65 20, 70 25 C78 28, 80 35, 75 40 C82 42, 85 50, 80 58 C88 65, 92 75, 90 85 C88 98, 75 105, 60 110 C58 108, 54 110, 50 110 Z"
-          fill="#000000"
+          fill={colors.text}
         />
       </Svg>
       <Text style={styles.headerTitle}>Bowel Max</Text>
@@ -326,7 +328,7 @@ export default function HistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,

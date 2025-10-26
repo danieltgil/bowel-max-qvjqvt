@@ -5,8 +5,7 @@
 
 import * as FileSystem from 'expo-file-system/legacy';
 
-// TODO: Replace with a valid OpenRouter API key if this one is expired
-const OPENROUTER_API_KEY = "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";
+const OPENROUTER_API_KEY = process.env.EXPO_PUBLIC_OPENROUTER_API_KEY;
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const CLAUDE_MODEL = "anthropic/claude-sonnet-4.5";
 

@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, Pressable, Animated, ScrollView, Alert, TextInp
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from "@/components/IconSymbol";
-import { colors } from "@/styles/commonStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 import { analyzeStoolImage, AnalysisResult } from "@/utils/imageAnalysis";
 import { supabase } from "@/app/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
@@ -13,7 +13,9 @@ export default function AnalysisScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ photoUri?: string; entryId?: string }>();
   const { userId } = useUser();
+  const { colors } = useTheme();
   const [isAnalyzing, setIsAnalyzing] = useState(true);
+  const styles = createStyles(colors);
   const [rotateAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.8));
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -506,7 +508,7 @@ export default function AnalysisScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
