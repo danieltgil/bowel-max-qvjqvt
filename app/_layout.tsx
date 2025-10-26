@@ -10,6 +10,7 @@ import { useNetworkState } from "expo-network";
 import { colors } from "@/styles/commonStyles";
 import { WidgetProvider } from "@/contexts/WidgetContext";
 import { UserProvider } from "@/contexts/UserContext";
+import { ThemeProvider as CustomThemeProvider, useTheme as useCustomTheme } from "@/contexts/ThemeContext";
 import { SystemBars } from "react-native-edge-to-edge";
 import {
   DarkTheme,
@@ -52,46 +53,48 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={customTheme}>
-        <UserProvider>
-          <WidgetProvider>
-            <SystemBars style="auto" />
-            <StatusBar style="auto" />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: colors.background },
-              }}
-            >
-              <Stack.Screen name="index" />
-              <Stack.Screen name="onboarding" />
-              <Stack.Screen name="camera" />
-              <Stack.Screen name="analysis" />
-              <Stack.Screen
-                name="modal"
-                options={{
-                  presentation: "modal",
-                  animation: "slide_from_bottom",
+      <CustomThemeProvider>
+        <ThemeProvider value={customTheme}>
+          <UserProvider>
+            <WidgetProvider>
+              <SystemBars style="auto" />
+              <StatusBar style="auto" />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: colors.background },
                 }}
-              />
-              <Stack.Screen
-                name="formsheet"
-                options={{
-                  presentation: "formSheet",
-                  sheetAllowedDetents: [0.5, 0.8],
-                }}
-              />
-              <Stack.Screen
-                name="transparent-modal"
-                options={{
-                  presentation: "transparentModal",
-                  animation: "fade",
-                }}
-              />
-            </Stack>
-          </WidgetProvider>
-        </UserProvider>
-      </ThemeProvider>
+              >
+                <Stack.Screen name="index" />
+                <Stack.Screen name="onboarding" />
+                <Stack.Screen name="camera" />
+                <Stack.Screen name="analysis" />
+                <Stack.Screen
+                  name="modal"
+                  options={{
+                    presentation: "modal",
+                    animation: "slide_from_bottom",
+                  }}
+                />
+                <Stack.Screen
+                  name="formsheet"
+                  options={{
+                    presentation: "formSheet",
+                    sheetAllowedDetents: [0.5, 0.8],
+                  }}
+                />
+                <Stack.Screen
+                  name="transparent-modal"
+                  options={{
+                    presentation: "transparentModal",
+                    animation: "fade",
+                  }}
+                />
+              </Stack>
+            </WidgetProvider>
+          </UserProvider>
+        </ThemeProvider>
+      </CustomThemeProvider>
     </GestureHandlerRootView>
   );
 }

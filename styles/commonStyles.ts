@@ -1,24 +1,52 @@
 
-import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-export const colors = {
-  // Bowel Max color scheme - Cal AI inspired
+// Light theme colors
+export const lightColors = {
   background: '#FFFFFF',
   backgroundAlt: '#FAFAFA',
   text: '#333333',
   textSecondary: '#666666',
   textLight: '#999999',
-  primary: '#A7F3D0',        // Mint green
-  primaryDark: '#74D680',    // Darker mint
-  secondary: '#D2B48C',      // Soft brown
-  accent: '#74D680',         // Accent mint
+  primary: '#A7F3D0',
+  primaryDark: '#74D680',
+  secondary: '#D2B48C',
+  accent: '#74D680',
   card: '#FAFAFA',
-  highlight: '#FDE68A',      // Light yellow
+  highlight: '#FDE68A',
   border: '#E5E5E5',
   success: '#10B981',
   warning: '#F59E0B',
   error: '#EF4444',
+  info: '#3B82F6',
 };
+
+// Dark theme colors
+export const darkColors = {
+  background: '#000000',
+  backgroundAlt: '#1A1A1A',
+  text: '#FFFFFF',
+  textSecondary: '#A3A3A3',
+  textLight: '#737373',
+  primary: '#A7F3D0',
+  primaryDark: '#74D680',
+  secondary: '#D2B48C',
+  accent: '#74D680',
+  card: '#1A1A1A',
+  highlight: '#3F3F00',
+  border: '#2A2A2A',
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  info: '#3B82F6',
+};
+
+// Default colors (light mode) for backward compatibility
+export const colors = lightColors;
+
+export function getColors(isDark: boolean) {
+  return isDark ? darkColors : lightColors;
+}
 
 export const buttonStyles = StyleSheet.create({
   primaryButton: {

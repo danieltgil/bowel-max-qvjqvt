@@ -2,22 +2,22 @@
 import React, { useState, useEffect } from "react";
 import { Stack } from "expo-router";
 import { ScrollView, Pressable, StyleSheet, View, Text, Platform, Animated, Alert } from "react-native";
-import { colors } from "@/styles/commonStyles";
 import * as ImagePicker from 'expo-image-picker';
 import { IconSymbol } from "@/components/IconSymbol";
-import { useTheme } from "@react-navigation/native";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useRouter } from 'expo-router';
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/app/integrations/supabase/client";
 import Svg, { Path } from 'react-native-svg';
 
 export default function HomeScreen() {
-  const theme = useTheme();
+  const { colors } = useTheme();
   const router = useRouter();
   const { user, userId } = useUser();
   const [scaleAnim] = useState(new Animated.Value(1));
   const [recentEntries, setRecentEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const styles = createStyles(colors);
 
   useEffect(() => {
     if (userId) {
@@ -81,7 +81,7 @@ export default function HomeScreen() {
       <Svg width={30} height={36} viewBox="0 0 100 120" style={{ marginRight: 8 }}>
         <Path
           d="M50 110 C35 105, 22 98, 20 85 C18 75, 22 65, 30 58 C25 50, 28 42, 35 40 C30 35, 32 28, 40 25 C45 20, 50 18, 55 20 C60 18, 65 20, 70 25 C78 28, 80 35, 75 40 C82 42, 85 50, 80 58 C88 65, 92 75, 90 85 C88 98, 75 105, 60 110 C58 108, 54 110, 50 110 Z"
-          fill="#000000"
+          fill={colors.text}
         />
       </Svg>
       <Text style={styles.headerTitle}>Bowel Max</Text>
@@ -132,7 +132,11 @@ export default function HomeScreen() {
           
           {recentEntries.length > 0 ? (
             recentEntries.map((entry) => (
-              <View key={entry.id} style={styles.summaryCard}>
+              <Pressable
+                key={entry.id}
+                style={styles.summaryCard}
+                onPress={() => router.push(`/analysis?entryId=${entry.id}`)}
+              >
                 <View style={styles.summaryCardHeader}>
                   <View style={styles.summaryCardIcon}>
                     <IconSymbol name="checkmark.circle.fill" color={colors.success} size={24} />
@@ -147,7 +151,7 @@ export default function HomeScreen() {
                   </View>
                   <IconSymbol name="chevron.right" color={colors.textSecondary} size={20} />
                 </View>
-              </View>
+              </Pressable>
             ))
           ) : (
             <View style={styles.emptyCard}>
@@ -172,7 +176,9 @@ export default function HomeScreen() {
 
               <View style={styles.statCard}>
                 <IconSymbol name="leaf.fill" color={colors.success} size={28} />
-                <Text style={styles.statValue}>{user.diet_type?.split(' ')[0] || 'N/A'}</Text>
+                <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+                  {user.diet_type?.split(' ')[0] || 'N/A'}
+                </Text>
                 <Text style={styles.statLabel}>Fiber</Text>
               </View>
 
@@ -197,7 +203,7 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -333,7 +339,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800',
     color: colors.text,
     marginTop: 8,

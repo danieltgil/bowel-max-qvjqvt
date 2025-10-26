@@ -2,29 +2,33 @@
 import React, { useState, useEffect } from "react";
 import { Stack } from "expo-router";
 import { ScrollView, StyleSheet, View, Text, Platform, Pressable, Switch, TextInput, Alert, ActivityIndicator } from "react-native";
-import { colors } from "@/styles/commonStyles";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from "@/components/IconSymbol";
 import { useUser } from "@/contexts/UserContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/app/integrations/supabase/client";
 import Svg, { Path } from 'react-native-svg';
 
 export default function ProfileScreen() {
   const { user, refreshUser, clearUser } = useUser();
+  const { isDark, setTheme, theme, colors } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   // Editable fields
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [hydrationGlasses, setHydrationGlasses] = useState("");
   const [conditionsDescription, setConditionsDescription] = useState("");
 
+  const styles = createStyles(colors);
+
   const renderHeaderLeft = () => (
     <View style={styles.headerLogo}>
       <Svg width={30} height={36} viewBox="0 0 100 120" style={{ marginRight: 8 }}>
         <Path
           d="M50 110 C35 105, 22 98, 20 85 C18 75, 22 65, 30 58 C25 50, 28 42, 35 40 C30 35, 32 28, 40 25 C45 20, 50 18, 55 20 C60 18, 65 20, 70 25 C78 28, 80 35, 75 40 C82 42, 85 50, 80 58 C88 65, 92 75, 90 85 C88 98, 75 105, 60 110 C58 108, 54 110, 50 110 Z"
-          fill="#000000"
+          fill={colors.text}
         />
       </Svg>
       <Text style={styles.headerTitle}>Bowel Max</Text>
@@ -85,7 +89,7 @@ export default function ProfileScreen() {
 
   if (!user) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <Stack.Screen
           options={{
             headerShown: true,
@@ -96,16 +100,18 @@ export default function ProfileScreen() {
             headerLeft: renderHeaderLeft,
           }}
         />
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No user profile found</Text>
-          <Text style={styles.emptySubtext}>Please complete onboarding first</Text>
+        <View style={styles.container}>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No user profile found</Text>
+            <Text style={styles.emptySubtext}>Please complete onboarding first</Text>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <Stack.Screen
         options={{
           headerShown: true,
@@ -114,203 +120,184 @@ export default function ProfileScreen() {
           headerTintColor: colors.text,
           headerShadowVisible: false,
           headerLeft: renderHeaderLeft,
-          headerRight: () => (
-            <Pressable onPress={() => isEditing ? handleCancel() : setIsEditing(true)} style={styles.headerRightButton}>
-              <Text style={styles.headerButton}>
-                {isEditing ? "Cancel" : "Edit"}
-              </Text>
-            </Pressable>
-          ),
         }}
       />
-      
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Profile Header */}
-        <View style={styles.header}>
-          <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>{user.name.charAt(0).toUpperCase()}</Text>
-          </View>
-          {isEditing ? (
-            <TextInput
-              style={styles.nameInput}
-              value={name}
-              onChangeText={setName}
-              placeholder="Your name"
-              placeholderTextColor={colors.textSecondary}
-            />
-          ) : (
-            <Text style={styles.name}>{user.name}</Text>
-          )}
-          <Text style={styles.memberSince}>
-            Member since {new Date(user.created_at || '').toLocaleDateString()}
-          </Text>
-        </View>
 
-        {/* Personal Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
-          
-          <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <View style={styles.infoLabel}>
-                <IconSymbol name="calendar" color={colors.primary} size={20} />
-                <Text style={styles.infoLabelText}>Age</Text>
-              </View>
-              {isEditing ? (
-                <TextInput
-                  style={styles.infoInput}
-                  value={age}
-                  onChangeText={setAge}
-                  keyboardType="number-pad"
-                  placeholder="Age"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              ) : (
-                <Text style={styles.infoValue}>{user.age} years</Text>
-              )}
-            </View>
+      <View style={styles.container}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
 
-            <View style={styles.divider} />
-
-            <View style={styles.infoRow}>
-              <View style={styles.infoLabel}>
-                <IconSymbol name="leaf.fill" color={colors.success} size={20} />
-                <Text style={styles.infoLabelText}>Diet Type</Text>
-              </View>
-              <Text style={styles.infoValue}>{user.diet_type || 'Not set'}</Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.infoRow}>
-              <View style={styles.infoLabel}>
-                <IconSymbol name="drop.fill" color={colors.info} size={20} />
-                <Text style={styles.infoLabelText}>Daily Water</Text>
-              </View>
-              {isEditing ? (
-                <TextInput
-                  style={styles.infoInput}
-                  value={hydrationGlasses}
-                  onChangeText={setHydrationGlasses}
-                  keyboardType="number-pad"
-                  placeholder="Glasses"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              ) : (
-                <Text style={styles.infoValue}>{user.hydration_glasses || 0} glasses</Text>
-              )}
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.infoRow}>
-              <View style={styles.infoLabel}>
-                <IconSymbol name="clock.fill" color={colors.warning} size={20} />
-                <Text style={styles.infoLabelText}>Frequency</Text>
-              </View>
-              <Text style={styles.infoValue}>{user.restroom_frequency || 'Not set'}/day</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Health Conditions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Health Information</Text>
-          
-          <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <View style={styles.infoLabel}>
-                <IconSymbol name="heart.fill" color={colors.error} size={20} />
-                <Text style={styles.infoLabelText}>Gut Conditions</Text>
-              </View>
-              <Text style={styles.infoValue}>{user.has_conditions ? 'Yes' : 'No'}</Text>
-            </View>
-
-            {user.has_conditions && (
-              <>
-                <View style={styles.divider} />
-                <View style={styles.conditionsContainer}>
-                  {isEditing ? (
-                    <TextInput
-                      style={[styles.infoInput, styles.textArea]}
-                      value={conditionsDescription}
-                      onChangeText={setConditionsDescription}
-                      placeholder="Describe your conditions"
-                      placeholderTextColor={colors.textSecondary}
-                      multiline
-                      numberOfLines={3}
-                      textAlignVertical="top"
-                    />
-                  ) : (
-                    <Text style={styles.conditionsText}>
-                      {user.conditions_description || 'No description provided'}
-                    </Text>
-                  )}
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-
-        {/* Save Button */}
-        {isEditing && (
-          <Pressable 
-            style={[styles.saveButton, loading && styles.saveButtonDisabled]} 
-            onPress={handleSave}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.text} />
-            ) : (
-              <Text style={styles.saveButtonText}>Save Changes</Text>
-            )}
+        {/* Profile Title */}
+        <View style={styles.titleSection}>
+          <Text style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
+          <Pressable onPress={() => isEditing ? handleCancel() : setIsEditing(true)}>
+            <Text style={[styles.editButton, { color: colors.text }]}>
+              {isEditing ? "Cancel" : "Edit"}
+            </Text>
           </Pressable>
-        )}
+        </View>
 
-        {/* Settings Section */}
-        {!isEditing && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Settings</Text>
-            
-            <View style={styles.infoCard}>
-              <Pressable style={styles.settingRow}>
-                <View style={styles.infoLabel}>
-                  <IconSymbol name="bell.fill" color={colors.primary} size={20} />
-                  <Text style={styles.infoLabelText}>Notifications</Text>
-                </View>
-                <Switch
-                  value={true}
-                  onValueChange={() => console.log('Toggle notifications')}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor={colors.background}
-                />
-              </Pressable>
+        {/* Profile Info Card */}
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.row}>
+            <Text style={[styles.label, { color: colors.text }]}>Name</Text>
+            {isEditing ? (
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder="Your name"
+                placeholderTextColor={colors.textSecondary}
+              />
+            ) : (
+              <Text style={styles.value}>{user.name}</Text>
+            )}
+          </View>
 
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Age</Text>
+            {isEditing ? (
+              <TextInput
+                style={styles.input}
+                value={age}
+                onChangeText={setAge}
+                keyboardType="number-pad"
+                placeholder="Age"
+                placeholderTextColor={colors.textSecondary}
+              />
+            ) : (
+              <Text style={styles.value}>{user.age} years</Text>
+            )}
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Diet Type</Text>
+            <Text style={styles.value}>{user.diet_type || 'Not set'}</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Daily Water</Text>
+            {isEditing ? (
+              <TextInput
+                style={styles.input}
+                value={hydrationGlasses}
+                onChangeText={setHydrationGlasses}
+                keyboardType="number-pad"
+                placeholder="Glasses"
+                placeholderTextColor={colors.textSecondary}
+              />
+            ) : (
+              <Text style={styles.value}>{user.hydration_glasses || 0} glasses</Text>
+            )}
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Restroom Frequency</Text>
+            <Text style={styles.value}>{user.restroom_frequency || 'Not set'}</Text>
+          </View>
+        </View>
+
+        {/* Health Information Card */}
+        <Text style={styles.sectionTitle}>Health Information</Text>
+
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Text style={styles.label}>Gut Conditions</Text>
+            <Text style={styles.value}>{user.has_conditions ? 'Yes' : 'No'}</Text>
+          </View>
+
+          {user.has_conditions && (
+            <>
               <View style={styles.divider} />
+              <View style={styles.columnRow}>
+                <Text style={styles.label}>Description</Text>
+                {isEditing ? (
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    value={conditionsDescription}
+                    onChangeText={setConditionsDescription}
+                    placeholder="Describe your conditions"
+                    placeholderTextColor={colors.textSecondary}
+                    multiline
+                    numberOfLines={3}
+                    textAlignVertical="top"
+                  />
+                ) : (
+                  <Text style={styles.descriptionValue}>
+                    {user.conditions_description || 'No description'}
+                  </Text>
+                )}
+              </View>
+            </>
+          )}
+        </View>
 
-              <Pressable style={styles.settingRow}>
-                <View style={styles.infoLabel}>
-                  <IconSymbol name="moon.fill" color={colors.textSecondary} size={20} />
-                  <Text style={styles.infoLabelText}>Dark Mode</Text>
-                </View>
-                <Switch
-                  value={false}
-                  onValueChange={() => console.log('Toggle dark mode')}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor={colors.background}
-                />
-              </Pressable>
-            </View>
+        {/* Appearance Settings */}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
+
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.row}>
+            <Text style={[styles.label, { color: colors.text }]}>Dark Mode</Text>
+            <Switch
+              value={isDark}
+              onValueChange={(value) => setTheme(value ? 'dark' : 'light')}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={colors.background}
+            />
+          </View>
+        </View>
+
+        {/* Account Information */}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
+
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.row}>
+            <Text style={styles.label}>Member Since</Text>
+            <Text style={styles.value}>
+              {new Date(user.created_at || '').toLocaleDateString('en-US', {
+                month: 'short',
+                year: 'numeric'
+              })}
+            </Text>
+          </View>
+        </View>
+
+        {/* Save Button (only show when editing) */}
+        {isEditing && (
+          <View style={styles.saveButtonContainer}>
+            <Pressable
+              style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+              onPress={handleSave}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save Changes</Text>
+              )}
+            </Pressable>
           </View>
         )}
 
         <View style={styles.bottomSpacing} />
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -326,165 +313,125 @@ const styles = StyleSheet.create({
     color: colors.text,
     letterSpacing: 0.5,
   },
-  headerRightButton: {
-    marginRight: 16,
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingBottom: Platform.OS === 'ios' ? 100 : 80,
   },
-  headerButton: {
+  titleSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 20,
+  },
+  pageTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: colors.text,
+    letterSpacing: -0.5,
+  },
+  editButton: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.primary,
-    marginRight: 16,
-  },
-  header: {
-    alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 24,
-  },
-  avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  avatarText: {
-    fontSize: 40,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  name: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  nameInput: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: 4,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: colors.border,
-    textAlign: 'center',
-    minWidth: 200,
-  },
-  memberSince: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.textSecondary,
-  },
-  section: {
-    paddingHorizontal: 24,
-    marginBottom: 24,
+    color: '#000000',
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 12,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 12,
   },
-  infoCard: {
-    backgroundColor: colors.cardBackground,
+  card: {
+    backgroundColor: '#FAFAFA',
+    marginHorizontal: 24,
     borderRadius: 16,
-    padding: 16,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.05)',
-    elevation: 2,
+    padding: 0,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
-  infoRow: {
+  row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
+  columnRow: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
-  infoLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  infoLabelText: {
+  label: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     color: colors.text,
   },
-  infoValue: {
+  value: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.textSecondary,
+    textAlign: 'right',
   },
-  infoInput: {
+  descriptionValue: {
+    fontSize: 15,
+    fontWeight: '400',
+    color: colors.textSecondary,
+    lineHeight: 22,
+    marginTop: 8,
+  },
+  input: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: colors.background,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    minWidth: 80,
     textAlign: 'right',
+    minWidth: 100,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
   textArea: {
     minHeight: 80,
     textAlign: 'left',
     width: '100%',
+    marginTop: 8,
+    paddingVertical: 12,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.border,
-    marginVertical: 4,
+    backgroundColor: '#E5E5E5',
+    marginHorizontal: 20,
   },
-  conditionsContainer: {
-    paddingTop: 12,
-  },
-  conditionsText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.textSecondary,
-    lineHeight: 20,
+  saveButtonContainer: {
+    paddingHorizontal: 24,
+    marginTop: 32,
   },
   saveButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 16,
+    backgroundColor: '#000000',
+    borderRadius: 100,
     paddingVertical: 18,
-    marginHorizontal: 24,
-    marginBottom: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0px 4px 12px rgba(167, 243, 208, 0.3)',
-    elevation: 4,
   },
   saveButtonDisabled: {
     opacity: 0.6,
   },
   saveButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 40,
   },
   emptyText: {
     fontSize: 20,
@@ -494,8 +441,9 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '400',
     color: colors.textSecondary,
+    textAlign: 'center',
   },
   bottomSpacing: {
     height: 40,

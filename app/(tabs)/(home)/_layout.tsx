@@ -3,11 +3,14 @@ import { Stack } from 'expo-router';
 
 export default function HomeLayout() {
   return (
-    <Stack>
+    <Stack
+      screenOptions={{
+        headerShown: true,
+      }}
+    >
       <Stack.Screen
         name="index"
         options={{
-          headerShown: Platform.OS === 'ios', // Show header on iOS with NativeTabs, hide on Android/Web
           title: 'Home'
         }}
       />
