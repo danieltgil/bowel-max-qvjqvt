@@ -56,6 +56,12 @@ export default function InsightsScreen() {
   const [aiLoading, setAiLoading] = useState(false);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');
 
+  const renderHeaderLeft = () => (
+    <View style={styles.headerLogo}>
+      <Text style={styles.headerTitle}>Insights</Text>
+    </View>
+  );
+
   useEffect(() => {
     if (userId) {
       loadInsightsData();
