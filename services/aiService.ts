@@ -29,9 +29,8 @@ class AIService {
   private model: string = 'anthropic/claude-3.5-sonnet';
 
   constructor() {
-    // Hardcoded API key for testing
-    this.apiKey = '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';
-    
+    this.apiKey = process.env.EXPO_PUBLIC_OPENROUTER_API_KEY || '';
+
     if (!this.apiKey) {
       console.warn('OpenRouter API key not found. Please set EXPO_PUBLIC_OPENROUTER_API_KEY in your environment variables.');
     }

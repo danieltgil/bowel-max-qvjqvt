@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Stack, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, View, Text, Platform, ActivityIndicator, RefreshControl, Pressable, Dimensions } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from "@/components/IconSymbol";
-import { colors } from "@/styles/commonStyles";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/app/integrations/supabase/client";
 import { Tables } from "@/app/integrations/supabase/types";
@@ -47,6 +48,7 @@ interface InsightsData {
 
 export default function InsightsScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { user, userId } = useUser();
   const [insightsData, setInsightsData] = useState<InsightsData | null>(null);
   const [aiInsights, setAiInsights] = useState<AIInsight | null>(null);
@@ -54,6 +56,7 @@ export default function InsightsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');
+  const styles = createStyles(colors);
 
   const renderHeaderLeft = () => (
     <View style={styles.headerLogo}>
