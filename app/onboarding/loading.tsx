@@ -9,7 +9,7 @@ export default function LoadingScreen() {
   useEffect(() => {
     // Simulate loading for 3 seconds
     const timer = setTimeout(() => {
-      router.push('/onboarding/plan-selection');
+      router.push('/onboarding/sign-in');
     }, 3000);
 
     return () => clearTimeout(timer);

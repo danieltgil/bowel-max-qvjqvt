@@ -22,6 +22,7 @@ export default function OnboardingLayout() {
       <Stack.Screen name="notifications" />
       <Stack.Screen name="referral" />
       <Stack.Screen name="loading" />
+      <Stack.Screen name="sign-in" />
       <Stack.Screen name="plan-selection" />
     </Stack>
   );
