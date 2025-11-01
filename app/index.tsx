@@ -62,11 +62,11 @@ export default function Index() {
     );
   }
 
-  // If user exists, go to home, otherwise go to onboarding
+  // If user exists, go to home, otherwise go to new onboarding landing
   if (user) {
     return <Redirect href="/(tabs)/(home)" />;
   } else {
-    return <Redirect href="/onboarding" />;
+    return <Redirect href="/onboarding/landing" />;
   }
 }
 
